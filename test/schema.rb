@@ -67,6 +67,9 @@ module FriendlyId
           # Used to test candidates
           add_column :cities, :code, :string, :limit => 3
 
+          # Used to test dependent destroy custom options
+          add_column :manuals, :deleted_at, :datetime
+
           @done = true
         end
 

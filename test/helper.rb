@@ -27,6 +27,7 @@ end
 require "mocha/setup"
 require "active_record"
 require 'active_support/core_ext/time/conversions'
+require 'paranoia'
 
 I18n.enforce_available_locales = false
 

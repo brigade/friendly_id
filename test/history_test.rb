@@ -1,14 +1,14 @@
 require "helper"
 
-class Manual < ActiveRecord::Base
-  extend FriendlyId
-  friendly_id :name, :use => [:slugged, :history]
-end
-
 class HistoryTest < TestCaseClass
 
   include FriendlyId::Test
   include FriendlyId::Test::Shared::Core
+
+  class Manual < ActiveRecord::Base
+    extend FriendlyId
+    friendly_id :name, :use => [:slugged, :history]
+  end
 
   def model_class
     Manual
@@ -168,6 +168,37 @@ class HistoryTestWithAutomaticSlugRegeneration < HistoryTest
       record.name = 'foo'
       record.save!
       assert_equal 'foo', record.friendly_id
+    end
+  end
+end
+
+class DependentDestroyTest < HistoryTest
+
+  include FriendlyId::Test
+
+  class Manual < ActiveRecord::Base
+    extend FriendlyId
+    acts_as_paranoid
+    friendly_id :name, :use => :history, :dependent => false
+  end
+
+  def model_class
+    Manual
+  end
+
+  test "should allow disabling of dependent destroy" do
+    transaction do
+      assert FriendlyId::Slug.find_by_slug('test').nil?
+      refute FriendlyId::Slug.where("slug LIKE 'test-%'").exists?
+      l = model_class.create! :name => "test"
+      assert FriendlyId::Slug.find_by_slug('test').present?
+      refute FriendlyId::Slug.where("slug LIKE 'test-%'").exists?
+      l.destroy
+      assert FriendlyId::Slug.find_by_slug('test').present?
+      refute FriendlyId::Slug.where("slug LIKE 'test-%'").exists?
+      model_class.create! :name => "test"
+      assert FriendlyId::Slug.find_by_slug('test').present?
+      assert FriendlyId::Slug.where("slug LIKE 'test-%'").exists?
     end
   end
 end
